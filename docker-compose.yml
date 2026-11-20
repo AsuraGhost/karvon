@@ -1,0 +1,30 @@
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: karvon
+      POSTGRES_USER: karvon
+      POSTGRES_PASSWORD: karvon
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U karvon"]
+      interval: 3s
+      retries: 20
+
+  app:
+    build: .
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      KARVON_DATABASE_URL: postgresql+psycopg://karvon:karvon@db:5432/karvon
+      KARVON_SEED_DEMO: "1"
+      KARVON_TERMINAL_NAME: Demo Border Terminal
+      KARVON_DEFAULT_LANGUAGE: en
+      KARVON_CURRENCY: USD
+    ports:
+      - "8000:8000"
+
+volumes:
+  pgdata:

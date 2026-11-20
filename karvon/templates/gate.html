@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>{{ t("gate.title") }}</h2>
+<form method="post" action="/gate">
+  <fieldset class="grid">
+    <label>{{ t("visit.plate") }} *<input name="plate_number" required maxlength="32" autofocus></label>
+    <label>{{ t("gate.trailer") }}<input name="trailer_number" maxlength="32"></label>
+    <label>{{ t("gate.country") }}<input name="country" maxlength="2" placeholder="UZ, AF, PK…"></label>
+  </fieldset>
+  <fieldset class="grid">
+    <label>{{ t("gate.driver_name") }} *<input name="driver_name" required maxlength="128"></label>
+    <label>{{ t("gate.passport") }} *<input name="driver_passport" required maxlength="32"></label>
+    <label>{{ t("gate.phone") }}<input name="driver_phone" maxlength="32"></label>
+  </fieldset>
+  <fieldset class="grid">
+    <label>{{ t("visit.tir") }}<input name="tir_carnet_number" maxlength="32"></label>
+    <label>{{ t("visit.cmr") }}<input name="cmr_number" maxlength="32"></label>
+  </fieldset>
+  <label>{{ t("visit.cargo") }}<textarea name="cargo_description" rows="2"></textarea></label>
+  <button type="submit">{{ t("gate.submit") }}</button>
+</form>
+{% endblock %}

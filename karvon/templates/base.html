@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="{{ lang }}">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}{{ terminal_name }}{% endblock %} · Karvon</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2.1.1/css/pico.min.css">
+  <style>
+    :root { --pico-font-size: 95%; }
+    nav.top { border-bottom: 1px solid var(--pico-muted-border-color); margin-bottom: 1.5rem; }
+    .brand { font-weight: 700; }
+    .badge { display: inline-block; padding: .1rem .5rem; border-radius: 999px; font-size: .8rem;
+             background: var(--pico-secondary-background); color: var(--pico-secondary-inverse); }
+    .badge.registered { background: #64748b; }
+    .badge.parked { background: #2563eb; }
+    .badge.in_operation { background: #d97706; }
+    .badge.awaiting_payment { background: #dc2626; }
+    .badge.cleared { background: #16a34a; }
+    .badge.exited { background: #94a3b8; }
+    .badge.planned { background: #64748b; }
+    .badge.in_progress { background: #d97706; }
+    .badge.completed { background: #16a34a; }
+    .badge.cancelled { background: #94a3b8; }
+    .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 1rem; }
+    .stats article { margin: 0; text-align: center; }
+    .stats strong { display: block; font-size: 2rem; }
+    .slots { display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: .5rem; }
+    .slot { border: 1px solid var(--pico-muted-border-color); border-radius: .5rem; padding: .5rem;
+            font-size: .85rem; min-height: 4rem; }
+    .slot.busy { background: var(--pico-primary-background); color: var(--pico-primary-inverse); }
+    .slot.busy a { color: inherit; }
+    .actions { display: flex; flex-wrap: wrap; gap: .5rem; align-items: center; }
+    .actions form { margin: 0; }
+    .actions button { margin: 0; padding: .3rem .8rem; font-size: .85rem; }
+    .error { border-left: 4px solid #dc2626; padding: .75rem 1rem; background: rgba(220,38,38,.08); }
+    .lang a { margin-left: .5rem; }
+    .lang a.current { font-weight: 700; text-decoration: underline; }
+    table { font-size: .9rem; }
+  </style>
+</head>
+<body>
+  <nav class="container top">
+    <ul>
+      <li><a href="/" class="brand">Karvon</a></li>
+      <li><small>{{ terminal_name }}</small></li>
+    </ul>
+    <ul>
+      <li><a href="/">{{ t("nav.dashboard") }}</a></li>
+      <li><a href="/gate">{{ t("nav.gate_in") }}</a></li>
+      <li><a href="/yard">{{ t("nav.yard") }}</a></li>
+      <li><a href="/stock">{{ t("nav.stock") }}</a></li>
+      <li><a href="/docs">API</a></li>
+      <li class="lang">
+        {% for code, name in languages.items() %}
+          <a href="/lang/{{ code }}" class="{{ 'current' if code == lang }}" title="{{ name }}">{{ code|upper }}</a>
+        {% endfor %}
+      </li>
+    </ul>
+  </nav>
+  <main class="container">
+    {% if error %}<p class="error" role="alert">{{ error }}</p>{% endif %}
+    {% block content %}{% endblock %}
+  </main>
+  <footer class="container"><small>Karvon · open-source terminal operating system</small></footer>
+</body>
+</html>

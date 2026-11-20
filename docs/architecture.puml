@@ -1,0 +1,85 @@
+@startuml Karvon_Domain
+title Karvon - Domain model v0.1
+skinparam shadowing false
+skinparam classBackgroundColor #F4F7FB
+skinparam classBorderColor #64748B
+hide methods
+
+class Vehicle {
+  plate_number
+  trailer_number
+  country
+}
+class Driver {
+  full_name
+  passport_number
+  phone
+}
+class Visit {
+  status
+  arrived_at
+  exited_at
+  tir_carnet_number
+  cmr_number
+  cargo_description
+}
+class YardZone {
+  code
+  name
+}
+class YardSlot {
+  code
+}
+class Operation {
+  type
+  status
+  customs_cleared
+  weight_kg
+}
+class StockLot {
+  owner
+  description
+  quantity_kg
+}
+class WeighTicket {
+  gross_kg
+  tare_kg
+  net_kg
+}
+class Tariff {
+  code
+  price
+  unit
+}
+class Charge {
+  tariff_code
+  quantity
+  amount
+  paid
+}
+
+Vehicle "1" -- "*" Visit
+Driver "1" -- "*" Visit
+YardZone "1" -- "*" YardSlot
+YardSlot "0..1" -- "0..1" Visit : occupied by
+Visit "1" -- "*" Operation
+Operation "*" -- "0..1" StockLot
+Visit "1" -- "*" WeighTicket
+Visit "1" -- "*" Charge
+Charge "*" -- "1" Tariff
+@enduml
+
+@startuml Karvon_Visit_Lifecycle
+title Karvon - Visit lifecycle v0.1
+skinparam shadowing false
+
+[*] --> registered : gate in
+registered --> parked : assign slot
+parked --> in_operation : start operation
+in_operation --> parked : complete operation
+registered --> awaiting_payment : request exit
+parked --> awaiting_payment : request exit
+awaiting_payment --> cleared : all charges paid
+cleared --> exited : gate out
+exited --> [*]
+@enduml

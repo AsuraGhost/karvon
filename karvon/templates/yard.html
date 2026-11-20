@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>{{ t("yard.title") }}</h2>
+{% for zone in zones %}
+<section>
+  <h4>{{ zone.code }} · {{ zone.name }}</h4>
+  <div class="slots">
+    {% for slot in zone.slots %}
+      {% if slot.visit %}
+      <div class="slot busy">
+        <strong>{{ slot.label }}</strong><br>
+        <a href="/visits/{{ slot.visit.id }}">{{ slot.visit.vehicle.plate_number }}</a><br>
+        <small>{{ t("status." ~ slot.visit.status.value) }}</small>
+      </div>
+      {% else %}
+      <div class="slot"><strong>{{ slot.label }}</strong><br><small>{{ t("yard.free") }}</small></div>
+      {% endif %}
+    {% endfor %}
+  </div>
+</section>
+{% endfor %}
+{% endblock %}

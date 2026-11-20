@@ -1,0 +1,162 @@
+{% extends "base.html" %}
+{% block title %}{{ visit.vehicle.plate_number }}{% endblock %}
+{% block content %}
+{% set s = visit.status.value %}
+{% set on_site = s in ["registered", "parked", "in_operation"] %}
+
+<hgroup>
+  <h2>{{ visit.vehicle.plate_number }}
+    <span class="badge {{ s }}">{{ t("status." ~ s) }}</span></h2>
+  <p>#{{ visit.id }} · {{ visit.driver.full_name }} ({{ visit.driver.passport_number }})
+    · {{ t("visit.slot") }}: {{ visit.slot.label if visit.slot else "—" }}</p>
+</hgroup>
+
+<div class="grid">
+  <article>
+    <dl>
+      <dt>{{ t("visit.arrived") }}</dt><dd>{{ visit.arrived_at.strftime("%Y-%m-%d %H:%M") }} ({{ parking_days }} {{ t("visit.days") }})</dd>
+      <dt>{{ t("visit.tir") }}</dt><dd>{{ visit.tir_carnet_number or "—" }}</dd>
+      <dt>{{ t("visit.cmr") }}</dt><dd>{{ visit.cmr_number or "—" }}</dd>
+      <dt>{{ t("visit.cargo") }}</dt><dd>{{ visit.cargo_description or "—" }}</dd>
+    </dl>
+  </article>
+  <article>
+    <h4>{{ t("visit.actions") }}</h4>
+    <div class="actions">
+      {% if s in ["registered", "parked"] %}
+      <form method="post" action="/visits/{{ visit.id }}/action/park" class="actions">
+        <select name="slot_id" aria-label="{{ t('visit.slot') }}">
+          <option value="">{{ t("yard.auto") }}</option>
+          {% for slot in free_slots %}<option value="{{ slot.id }}">{{ slot.label }}</option>{% endfor %}
+        </select>
+        <button type="submit">{{ t("action.park") }}</button>
+      </form>
+      <form method="post" action="/visits/{{ visit.id }}/action/request-exit">
+        <button type="submit" class="secondary">{{ t("action.request_exit") }}</button>
+      </form>
+      {% endif %}
+      {% if s == "awaiting_payment" %}
+      <form method="post" action="/visits/{{ visit.id }}/action/pay">
+        <button type="submit">{{ t("action.pay") }} {{ visit.total_due }} {{ currency }}</button>
+      </form>
+      {% endif %}
+      {% if s == "cleared" %}
+      <form method="post" action="/visits/{{ visit.id }}/action/gate-out">
+        <button type="submit">{{ t("action.gate_out") }}</button>
+      </form>
+      {% endif %}
+    </div>
+  </article>
+</div>
+
+<h3>{{ t("op.title") }}</h3>
+{% if visit.operations %}
+<div class="overflow-auto">
+<table>
+  <thead><tr><th>#</th><th>{{ t("op.type") }}</th><th>{{ t("op.weight") }}</th><th>{{ t("op.owner") }}</th>
+    <th>{{ t("op.status") }}</th><th>{{ t("op.customs") }}</th><th></th></tr></thead>
+  <tbody>
+  {% for op in visit.operations %}
+  <tr>
+    <td>{{ op.id }}</td>
+    <td>{{ t("optype." ~ op.type.value) }}
+      {% if op.target_visit %}→ <a href="/visits/{{ op.target_visit.id }}">{{ op.target_visit.vehicle.plate_number }}</a>{% endif %}
+      {% if op.stock_lot %}<small>({{ t("stock.lot") }} #{{ op.stock_lot.id }})</small>{% endif %}
+    </td>
+    <td>{{ op.weight_kg }}</td>
+    <td>{{ op.cargo_owner or "—" }}</td>
+    <td><span class="badge {{ op.status.value }}">{{ t("opstatus." ~ op.status.value) }}</span></td>
+    <td>{{ "✔" if op.customs_cleared else "—" }}</td>
+    <td class="actions">
+      {% if op.status.value == "planned" %}
+        <form method="post" action="/operations/{{ op.id }}/action/start"><button>{{ t("action.start") }}</button></form>
+      {% endif %}
+      {% if op.status.value == "in_progress" %}
+        <form method="post" action="/operations/{{ op.id }}/action/complete"><button>{{ t("action.complete") }}</button></form>
+      {% endif %}
+      {% if op.status.value in ["planned", "in_progress"] %}
+        <form method="post" action="/operations/{{ op.id }}/action/cancel"><button class="secondary outline">{{ t("action.cancel") }}</button></form>
+      {% endif %}
+      {% if not op.customs_cleared and op.status.value != "cancelled" %}
+        <form method="post" action="/operations/{{ op.id }}/action/customs"><button class="contrast outline">{{ t("action.customs") }}</button></form>
+      {% endif %}
+    </td>
+  </tr>
+  {% endfor %}
+  </tbody>
+</table>
+</div>
+{% endif %}
+
+{% if on_site %}
+<details>
+  <summary role="button" class="outline">{{ t("op.plan") }}</summary>
+  <form method="post" action="/visits/{{ visit.id }}/action/operation">
+    <fieldset class="grid">
+      <label>{{ t("op.type") }}
+        <select name="type">
+          {% for ot in operation_types %}<option value="{{ ot.value }}">{{ t("optype." ~ ot.value) }}</option>{% endfor %}
+        </select>
+      </label>
+      <label>{{ t("op.weight") }}<input name="weight_kg" inputmode="decimal" required></label>
+      <label>{{ t("op.owner") }}<input name="cargo_owner"></label>
+    </fieldset>
+    <fieldset class="grid">
+      <label>{{ t("op.target") }}
+        <select name="target_visit_id">
+          <option value="">—</option>
+          {% for v in other_visits %}<option value="{{ v.id }}">{{ v.vehicle.plate_number }} (#{{ v.id }})</option>{% endfor %}
+        </select>
+      </label>
+      <label>{{ t("op.lot") }}
+        <select name="stock_lot_id">
+          <option value="">—</option>
+          {% for lot in lots %}<option value="{{ lot.id }}">#{{ lot.id }} {{ lot.owner }} · {{ lot.quantity_kg }} kg</option>{% endfor %}
+        </select>
+      </label>
+    </fieldset>
+    <label>{{ t("op.notes") }}<input name="notes"></label>
+    <button type="submit">{{ t("op.plan") }}</button>
+  </form>
+</details>
+{% endif %}
+
+<h3>{{ t("weigh.title") }}</h3>
+{% if visit.weigh_tickets %}
+<table>
+  <thead><tr><th>#</th><th>{{ t("weigh.gross") }}</th><th>{{ t("weigh.tare") }}</th><th>{{ t("weigh.net") }}</th><th></th></tr></thead>
+  <tbody>
+  {% for w in visit.weigh_tickets %}
+  <tr><td>{{ w.id }}</td><td>{{ w.gross_kg }}</td><td>{{ w.tare_kg }}</td><td><strong>{{ w.net_kg }}</strong></td>
+      <td>{{ w.created_at.strftime("%Y-%m-%d %H:%M") }}</td></tr>
+  {% endfor %}
+  </tbody>
+</table>
+{% endif %}
+{% if on_site %}
+<form method="post" action="/visits/{{ visit.id }}/action/weigh">
+  <fieldset role="group">
+    <input name="gross_kg" placeholder="{{ t('weigh.gross') }}" inputmode="decimal" required>
+    <input name="tare_kg" placeholder="{{ t('weigh.tare') }}" inputmode="decimal" required>
+    <button type="submit">{{ t("weigh.submit") }}</button>
+  </fieldset>
+</form>
+{% endif %}
+
+<h3>{{ t("charges.title") }}</h3>
+{% if visit.charges %}
+<table>
+  <thead><tr><th>{{ t("charges.desc") }}</th><th>{{ t("charges.qty") }}</th><th>{{ t("charges.price") }}</th>
+    <th>{{ t("charges.amount") }}</th><th>{{ t("charges.paid") }}</th></tr></thead>
+  <tbody>
+  {% for c in visit.charges %}
+  <tr><td>{{ c.description }}</td><td>{{ c.quantity.normalize() }}</td><td>{{ c.unit_price }}</td>
+      <td>{{ c.amount }} {{ currency }}</td><td>{{ "✔" if c.paid else "—" }}</td></tr>
+  {% endfor %}
+  </tbody>
+  <tfoot><tr><th colspan="3">{{ t("visit.due") }}</th><th>{{ visit.total_due }} {{ currency }}</th><th></th></tr></tfoot>
+</table>
+{% else %}
+<p>{{ t("common.none") }}</p>
+{% endif %}
+{% endblock %}

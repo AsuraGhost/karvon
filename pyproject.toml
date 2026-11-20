@@ -1,0 +1,49 @@
+[build-system]
+requires = ["hatchling>=1.25"]
+build-backend = "hatchling.build"
+
+[project]
+name = "karvon"
+version = "0.1.0"
+description = "Open-source Terminal Operating System for land freight terminals, dry ports and TIR parks"
+readme = "README.md"
+license = "MIT"
+requires-python = ">=3.12"
+keywords = ["logistics", "terminal-operating-system", "tos", "dry-port", "tir", "yard-management", "warehouse", "customs", "weighbridge"]
+classifiers = [
+  "Development Status :: 3 - Alpha",
+  "Framework :: FastAPI",
+  "Intended Audience :: Developers",
+  "Intended Audience :: Other Audience",
+  "Programming Language :: Python :: 3",
+  "Topic :: Office/Business",
+]
+dependencies = [
+  "fastapi>=0.115",
+  "uvicorn[standard]>=0.30",
+  "sqlalchemy>=2.0",
+  "jinja2>=3.1",
+  "python-multipart>=0.0.9",
+]
+
+[project.optional-dependencies]
+postgres = ["psycopg[binary]>=3.2"]
+dev = ["pytest>=8", "httpx>=0.27", "ruff>=0.6"]
+
+[project.urls]
+Documentation = "https://github.com/OWNER/karvon/tree/main/docs"
+Issues = "https://github.com/OWNER/karvon/issues"
+
+[tool.hatch.build.targets.wheel]
+packages = ["karvon"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+filterwarnings = ["ignore::DeprecationWarning:fastapi.testclient", "ignore:Using `httpx`"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]

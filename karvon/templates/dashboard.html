@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>{{ t("dash.title") }}</h2>
+
+<section class="stats">
+  {% for key in ["registered", "parked", "in_operation", "awaiting_payment", "cleared"] %}
+  <article><strong>{{ counts[key] }}</strong><span class="badge {{ key }}">{{ t("status." ~ key) }}</span></article>
+  {% endfor %}
+  <article><strong>{{ counts["free_slots"] }}</strong>{{ t("dash.free_slots") }}</article>
+</section>
+
+<h3>{{ t("dash.on_site") }}</h3>
+{% if visits %}
+<div class="overflow-auto">
+<table>
+  <thead>
+    <tr>
+      <th>#</th><th>{{ t("visit.plate") }}</th><th>{{ t("visit.driver") }}</th>
+      <th>{{ t("visit.status") }}</th><th>{{ t("visit.slot") }}</th>
+      <th>{{ t("visit.arrived") }}</th><th>{{ t("visit.due") }}</th>
+    </tr>
+  </thead>
+  <tbody>
+  {% for v in visits %}
+    <tr>
+      <td><a href="/visits/{{ v.id }}">{{ v.id }}</a></td>
+      <td><a href="/visits/{{ v.id }}">{{ v.vehicle.plate_number }}</a> <small>{{ v.vehicle.country or "" }}</small></td>
+      <td>{{ v.driver.full_name }}</td>
+      <td><span class="badge {{ v.status.value }}">{{ t("status." ~ v.status.value) }}</span></td>
+      <td>{{ v.slot.label if v.slot else "—" }}</td>
+      <td>{{ v.arrived_at.strftime("%Y-%m-%d %H:%M") }}</td>
+      <td>{{ v.total_due }} {{ currency }}</td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+</div>
+{% else %}
+<p>{{ t("common.none") }}. <a href="/gate">{{ t("nav.gate_in") }}</a></p>
+{% endif %}
+{% endblock %}
