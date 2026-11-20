@@ -25,7 +25,11 @@ router = APIRouter(include_in_schema=False)
 
 
 def _lang(request: Request) -> str:
-    lang = request.cookies.get("lang") or request.app.state.settings.default_language
+    lang = (
+        request.query_params.get("lang")
+        or request.cookies.get("lang")
+        or request.app.state.settings.default_language
+    )
     return lang if lang in languages() else "en"
 
 

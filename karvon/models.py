@@ -143,7 +143,7 @@ class Visit(Base):
 
     @property
     def total_due(self) -> Decimal:
-        return sum((c.amount for c in self.charges if not c.paid), Decimal("0"))
+        return sum((c.amount for c in self.charges if not c.paid), Decimal("0.00"))
 
 
 class StockLot(Base):

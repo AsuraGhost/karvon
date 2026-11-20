@@ -44,3 +44,8 @@ def test_gate_form_flow(client):
     # errors come back as a message, not a 500
     r = client.post(f"{url}/action/weigh", data={"gross_kg": "abc", "tare_kg": "1"})
     assert r.status_code == 200 and "Not a number" in r.text
+
+
+def test_language_from_query(demo_client):
+    assert "Обзор терминала" in demo_client.get("/?lang=ru").text
+    assert "Terminal overview" in demo_client.get("/?lang=xx").text

@@ -10,7 +10,20 @@ parked, transloaded, weighed, cleared and released every day.
 > **Status: alpha (v0.1).** The core visit flow works end to end. Feedback and
 > contributors are very welcome. See the [roadmap](#roadmap).
 
-<!-- TODO: add a screenshot or GIF of the dashboard here: docs/screenshot.png -->
+![Karvon dashboard: trucks on site, their status, yard slot and amount due](docs/img/dashboard.png)
+
+<table>
+  <tr>
+    <td><img src="docs/img/yard.png" alt="Yard board with occupied and free slots"></td>
+    <td><img src="docs/img/visit.png" alt="Truck visit with weigh ticket and charges"></td>
+  </tr>
+  <tr>
+    <td align="center"><sub>Yard board</sub></td>
+    <td align="center"><sub>Truck visit: weighing and charges</sub></td>
+  </tr>
+</table>
+
+<p align="center"><sub>Interface in English, Russian and Uzbek. <a href="docs/img/dashboard-ru.png">Russian screenshot</a></sub></p>
 
 ## Why
 
