@@ -6,8 +6,11 @@ Every function works inside the caller's session and only flushes; the caller co
 
 from __future__ import annotations
 
+import csv
+import io
 import math
 from dataclasses import dataclass
+from datetime import datetime
 from decimal import ROUND_HALF_UP, Decimal
 
 from sqlalchemy import func, select
@@ -367,6 +370,59 @@ def list_visits(session: Session, *, on_site_only: bool = False) -> list[Visit]:
     if on_site_only:
         stmt = stmt.where(Visit.status != VisitStatus.exited)
     return list(session.scalars(stmt))
+
+
+CSV_COLUMNS = [
+    "id",
+    "plate",
+    "country",
+    "driver",
+    "status",
+    "slot",
+    "arrived_at",
+    "exited_at",
+    "total charged",
+    "total paid",
+]
+
+
+def export_visits_csv(
+    session: Session,
+    *,
+    arrived_from: datetime | None = None,
+    arrived_to: datetime | None = None,
+) -> str:
+    """One CSV row per visit, for managers and accountants working in Excel.
+
+    Filters are on `arrived_at`. SQLite stores datetimes as naive UTC, so
+    aware inputs are converted to naive UTC before comparing.
+    """
+    stmt = select(Visit).order_by(Visit.id)
+    if arrived_from is not None:
+        stmt = stmt.where(Visit.arrived_at >= as_utc(arrived_from).replace(tzinfo=None))
+    if arrived_to is not None:
+        stmt = stmt.where(Visit.arrived_at <= as_utc(arrived_to).replace(tzinfo=None))
+    out = io.StringIO()
+    writer = csv.writer(out)
+    writer.writerow(CSV_COLUMNS)
+    for visit in session.scalars(stmt):
+        charged = sum((c.amount for c in visit.charges), Decimal("0.00"))
+        paid = sum((c.amount for c in visit.charges if c.paid), Decimal("0.00"))
+        writer.writerow(
+            [
+                visit.id,
+                visit.vehicle.plate_number,
+                visit.vehicle.country or "",
+                visit.driver.full_name,
+                visit.status.value,
+                visit.slot.label if visit.slot else "",
+                as_utc(visit.arrived_at).isoformat(),
+                as_utc(visit.exited_at).isoformat() if visit.exited_at else "",
+                f"{charged:.2f}",
+                f"{paid:.2f}",
+            ]
+        )
+    return out.getvalue()
 
 
 def dashboard_counts(session: Session) -> dict[str, int]:
