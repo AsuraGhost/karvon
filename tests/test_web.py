@@ -49,3 +49,63 @@ def test_gate_form_flow(client):
 def test_language_from_query(demo_client):
     assert "Обзор терминала" in demo_client.get("/?lang=ru").text
     assert "Terminal overview" in demo_client.get("/?lang=xx").text
+
+
+def test_charges_are_translated(demo_client):
+    # demo visit 2 is unloading 18 t into the warehouse; completing it adds a charge
+    demo_client.post("/api/v1/operations/1/complete")
+    page = demo_client.get("/visits/2?lang=ru").text
+    assert "Выгрузка на склад" in page
+    assert "warehouse_unload, op #1" not in page
+
+
+def test_custom_tariff_falls_back_to_description(demo_client):
+    from decimal import Decimal
+
+    from karvon.models import Charge, Tariff, TariffUnit
+
+    with demo_client.app.state.sessionmaker() as s, s.begin():
+        s.add(Tariff(code="reefer_power", name="Reefer power", unit=TariffUnit.day, price=1))
+        s.add(
+            Charge(
+                visit_id=2,
+                tariff_code="reefer_power",
+                description="Reefer power supply",
+                quantity=Decimal(1),
+                unit_price=Decimal(1),
+                amount=Decimal(1),
+            )
+        )
+    page = demo_client.get("/visits/2?lang=ru").text
+    assert "Reefer power supply" in page
+    assert "tariff.reefer_power" not in page
+
+
+def test_dashboard_search(demo_client):
+    page = demo_client.get("/?q=kbl&lang=en").text
+    assert "KBL-4521" in page and "LHR-8830" not in page
+    page = demo_client.get("/?q=nothing&lang=en").text
+    assert "No vehicles on site match" in page
+
+
+def test_exit_pass(client):
+    r = client.post(
+        "/api/v1/visits",
+        json={"plate_number": "QTA-7714", "driver_name": "Bilal", "driver_passport": "PK1"},
+    )
+    vid = r.json()["id"]
+
+    # not cleared yet: back to the visit with a message
+    r = client.get(f"/visits/{vid}/pass?lang=en", follow_redirects=False)
+    assert r.status_code == 303 and r.headers["location"].startswith(f"/visits/{vid}?error=")
+    assert "/pass" not in client.get(f"/visits/{vid}").text
+
+    client.post(f"/api/v1/visits/{vid}/request-exit")
+    client.post(f"/api/v1/visits/{vid}/pay")
+    page = client.get(f"/visits/{vid}/pass?lang=ru").text
+    assert "Пропуск на выезд" in page and "QTA-7714" in page
+    assert "15.00 USD" in page  # one day of parking, paid
+    assert f"/visits/{vid}/pass" in client.get(f"/visits/{vid}").text
+
+    client.post(f"/api/v1/visits/{vid}/gate-out")
+    assert client.get(f"/visits/{vid}/pass").status_code == 200

@@ -77,5 +77,22 @@
   "stock.desc": "Tavsif",
   "stock.qty": "Miqdor, kg",
   "stock.since": "Sana",
-  "common.none": "Hozircha boʻsh"
+  "common.none": "Hozircha boʻsh",
+  "tariff.parking_day": "TIR turargohi",
+  "tariff.weighbridge": "Tarozi",
+  "tariff.direct_transfer": "Toʻgʻridan-toʻgʻri qayta yuklash",
+  "tariff.warehouse_unload": "Omborga tushirish",
+  "tariff.warehouse_load": "Ombordan yuklash",
+  "dash.search": "Davlat raqami boʻyicha qidirish",
+  "dash.search_button": "Qidirish",
+  "dash.no_match": "Terminalda mos transport yoʻq:",
+  "dash.show_all": "Hammasini koʻrsatish",
+  "pass.title": "Chiqish ruxsatnomasi",
+  "pass.print": "Chop etish",
+  "pass.back": "Tashrifga qaytish",
+  "pass.issued": "Berilgan",
+  "pass.total_paid": "Jami toʻlangan",
+  "pass.operator_signature": "Operator imzosi",
+  "pass.guard_signature": "Nazorat punkti qoʻriqchisi imzosi",
+  "pass.not_cleared": "Ruxsatnoma barcha toʻlovlardan soʻng beriladi."
 }

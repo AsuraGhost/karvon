@@ -58,7 +58,8 @@ def fetch_csv(client, params=None):
     assert r.status_code == 200, r.text
     assert r.headers["content-type"].startswith("text/csv")
     assert r.headers["content-disposition"] == 'attachment; filename="visits.csv"'
-    return list(csv.reader(io.StringIO(r.text)))
+    # utf-8-sig strips the BOM, the way Excel reads the file
+    return list(csv.reader(io.StringIO(r.content.decode("utf-8-sig"))))
 
 
 def test_csv_export_header_and_data_row(client):
@@ -94,6 +95,41 @@ def test_csv_export_date_filter(client):
 
     # a window that contains the visit returns it
     assert len(fetch_csv(client, {"from": past, "to": future})) == 2
+
+
+def test_csv_export_bom_and_cyrillic_driver(client):
+    gate_in(client, "01A123BC", "AA0000001", driver_name="Азиз Абдуллаев")
+
+    r = client.get(f"{API}/visits.csv")
+    assert r.status_code == 200, r.text
+    # a BOM + an explicit charset keep Excel from mangling Cyrillic names
+    assert r.content.startswith(b"\xef\xbb\xbf")
+    assert "charset=utf-8" in r.headers["content-type"]
+
+    rows = list(csv.reader(io.StringIO(r.content.decode("utf-8-sig"))))
+    assert rows[0] == EXPECTED_HEADER
+    assert rows[1][3] == "Азиз Абдуллаев"
+
+
+def test_csv_export_formula_injection_is_escaped(client):
+    gate_in(client, "01A123BC", "AA0000001", driver_name='=HYPERLINK("http://x","y")')
+    gate_in(client, "30B456CD", "UZ1", driver_name="@SUM(1+1)")
+
+    rows = fetch_csv(client)
+    drivers = {row[3] for row in rows[1:]}
+    # a leading ' keeps the cell a literal string in a spreadsheet
+    assert drivers == {'\'=HYPERLINK("http://x","y")', "'@SUM(1+1)"}
+
+
+def test_csv_export_date_only_to_means_end_of_day(client):
+    gate_in(client, "01A123BC", "AA0000001")
+    today = datetime.now(UTC).date()
+
+    # the visit arrived today, so a date-only `to` of today includes it
+    assert len(fetch_csv(client, {"to": today.isoformat()})) == 2
+    # ...while yesterday's date still excludes it
+    yesterday = (today - timedelta(days=1)).isoformat()
+    assert fetch_csv(client, {"to": yesterday}) == [EXPECTED_HEADER]
 
 
 def test_dashboard_links_csv_export(demo_client):
