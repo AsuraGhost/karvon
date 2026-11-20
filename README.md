@@ -34,7 +34,7 @@ self-hosted system that models how a truck terminal really works:
 With Docker:
 
 ```bash
-git clone https://github.com/OWNER/karvon.git
+git clone https://github.com/Khan-ipak/karvon.git
 cd karvon
 docker compose up
 ```
@@ -82,7 +82,7 @@ lifecycle are in [`docs/architecture.md`](docs/architecture.md).
 - [ ] Reports: dwell time, throughput, revenue
 - [ ] More languages: Turkish, Dari, Pashto, Kazakh, Tajik
 
-Have a terminal with a different process? [Open an issue](https://github.com/OWNER/karvon/issues).
+Have a terminal with a different process? [Open an issue](https://github.com/Khan-ipak/karvon/issues).
 Real-world processes shape the roadmap.
 
 ## Contributing
